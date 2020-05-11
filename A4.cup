@@ -1,0 +1,74 @@
+import java.io.*;
+terminal String PLUS, MINUS, TIMES, DIVIDE, LPAREN, RPAREN, INT, REAL, STRING, WRITE, READ, RETURN, MAIN, BEGIN, END, IF, ELSE, ERROR, SEMI, ISEQUAL, ISNOTEQUAL, EQUAL, COMMA, IDENTIFIER, QUOTE, INTNUMBER, REALNUMBER;
+
+non terminal String expr, Integer, Program, MethodDecl, FormalParam, FormalParams, EPFormalParams, Block, Statements, Statment, LocalVarDecl, AssignStmt, ReturnStmt, IfStmt, WriteStmt, ReadStmt, ActualParams, EPActualParams, Boolean, BoolExpression, type, Program2;
+
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+precedence left ISEQUAL, ISNOTEQUAL;
+precedence left IF, ELSE;
+precedence left BEGIN, END;
+
+Program2 ::=  Program:e {: RESULT = "import java.io.*;\npublic class A4 {\n static BufferedReader $br;\nstatic BufferedWriter $bw;\nstatic double $tmp_real;\n" + e + "}"; :};
+
+Program ::= MethodDecl:x {: RESULT = x; :}
+        | MethodDecl:x1 Program:x2 {: RESULT = x1 + " " + x2; :};
+
+MethodDecl ::= type:x1 MAIN IDENTIFIER:x2 LPAREN FormalParams:x3 RPAREN Block:x4 {: RESULT = "public static void main (String[] args) throws Exception" + x4; :}
+        | type:x1 IDENTIFIER:x2 LPAREN FormalParams:x3 RPAREN Block:x4 {: RESULT = "public static " + x1 + " " + x2 + "(" + x3 + ")" + x4; :};
+
+FormalParams ::= FormalParam:x1 EPFormalParams:x2 {: RESULT = x1 + " " + x2; :}
+            | {: RESULT = ""; :};
+
+EPFormalParams ::= COMMA FormalParam:x1 EPFormalParams:x2 {: RESULT = ", " + x1 + " " + x2; :}
+                | {: RESULT = ""; :};
+
+FormalParam ::= type:x1 IDENTIFIER:x2 {: RESULT = x1 + " " + x2; :} ;
+
+Block ::= BEGIN Statements:x1 END {: RESULT = "{" + x1 + "}"; :};
+
+Statements ::= Statment:x1 Statements:x2 {: RESULT = x1 + x2; :}
+            | Statment:x1 {: RESULT = x1; :}; 
+
+Statment ::= Block:x {: RESULT = x + "\n"; :}
+        | LocalVarDecl:x {: RESULT = x + "\n"; :}
+        | AssignStmt:x {: RESULT = x + "\n"; :}
+        | ReturnStmt:x {: RESULT = x + "\n"; :}
+        | IfStmt: x {: RESULT = x + "\n"; :}
+        | WriteStmt:x {: RESULT = x + "\n"; :}
+        | ReadStmt:x {: RESULT = x + "\n"; :} ;
+
+LocalVarDecl ::= type:x1 IDENTIFIER:x2 SEMI {: RESULT = x1 + " " + x2 + ";"; :}
+        | type:x1 AssignStmt:x2 {: RESULT = x1 + " " + x2; :} ;
+
+AssignStmt ::= IDENTIFIER:x1 EQUAL expr:x2 SEMI {: RESULT = x1 + "=" + x2 + ";"; :}
+        | IDENTIFIER:x1 EQUAL QUOTE:x2 SEMI {: RESULT = x1 + "=" + x2 + ";"; :} ;
+
+ReturnStmt ::= RETURN expr:x1 SEMI {: RESULT = "return " + x1 + ";"; :};
+
+IfStmt ::= IF LPAREN BoolExpression:x1 RPAREN Statment:x2 {: RESULT = "if (" + x1 + ")" + x2; :}
+        | IF LPAREN BoolExpression:x1 RPAREN Statment:x2 ELSE Statment:x3 {: RESULT = "if (" + x1 + ")" + x2 + " else" + x3; :} ;
+
+WriteStmt ::= WRITE LPAREN expr:x1 COMMA QUOTE:x2 RPAREN SEMI {: RESULT = "$tmp_real=" + x1 + ";\n$bw=new BufferedWriter(new FileWriter(" + x2 + "));\n$bw.write(\"\" + $tmp_real);\n$bw.close();\n"; :};
+
+ReadStmt ::= READ LPAREN IDENTIFIER:x1 COMMA QUOTE:x2 RPAREN SEMI {: RESULT = "$br = new BufferedReader(new FileReader(" + x2 + "));" + x1 + "=new Integer($br.readLine()).intValue();"; :};
+
+BoolExpression ::= expr:x1 ISEQUAL expr:x2 {: RESULT = x1 + "==" + x2; :}
+        | expr:x1 ISNOTEQUAL expr:x2 {: RESULT = x1 + "!=" + x2; :} ;
+
+expr      ::= expr:x1 PLUS expr:x2 {: RESULT = x1 + "+" + x2; :} 
+            | expr:x1 MINUS expr:x2 {: RESULT = x1 + "-" + x2; :}
+            | expr:x1 TIMES expr:x2 {: RESULT = x1 + "*" + x2; :}
+            | expr:x1 DIVIDE expr:x2 {: RESULT = x1 + "/" + x2; :} 
+            | LPAREN expr:x1 RPAREN {: RESULT = "(" + x1 + ")"; :}
+            | IDENTIFIER:x {: RESULT = x; :}
+            | IDENTIFIER:x1 LPAREN ActualParams:x2 RPAREN {: RESULT = x1 + "(" + x2 + ")"; :}
+            | REALNUMBER:x {: RESULT = x; :}
+            | INTNUMBER:x {: RESULT = x; :} ;
+
+ActualParams ::= expr:x1 EPActualParams:x2 {: RESULT = x1 + x2; :};
+
+EPActualParams ::= COMMA expr:x1 EPActualParams:x2 {: RESULT = ", " + x1 + x2; :}
+                | {: RESULT = ""; :};
+
+type ::= INT {: RESULT = "int"; :} | REAL {: RESULT = "double"; :} | STRING {: RESULT = "String"; :};
